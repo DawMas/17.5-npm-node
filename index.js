@@ -1,30 +1,36 @@
+var EventEmitter = require("events").EventEmitter;
 var OSinfo = require('./modules/OSinfo');
 
+var emitter = new EventEmitter();
+emitter.on("beforeCommand", function (instruction) {
+    console.log('You wrote: ' + instruction + ', trying to run command');
+});
+emitter.on("afterCommand", function () {
+    console.log('Finished command');
+});
 
 process.stdin.setEncoding('utf-8');
-process.stdin.on('readable', function () {
-    // metoda .read() ma za zadanie odczytać co użytkownik podał na wejściu
+process.stdin.on('readable', function() {
     var input = process.stdin.read();
-
-    //console.log(process.env.LANG);
-    if (input !== null) {
-        var instruction = input.toString().trim();
-        switch (instruction) {
-            case 'node version':
-                process.stdout.write(' Node version: ' + process.version);
-                break;
-            case 'system lang':
-                process.stdout.write(' System language: ' + process.env.LANG + ' ');
-                break;
+    if(input !== null) {
+        var instruction = input.trim();
+        // odpalanie zdarzenia beforeCommand (z parametrem)
+        emitter.emit('beforeCommand', instruction);
+        switch(instruction) {
             case '/exit':
-                process.stdout.write('Quitting app!\n');
+                process.stdout.write('Quiting app!');
                 process.exit();
+                break;
+            case '/sayhello':
+                process.stdout.write('hello!\n');
+                break;
             case '/getOSinfo':
                 OSinfo.print();
                 break;
             default:
                 process.stderr.write('Wrong instruction!\n');
-        }
+        };
+        // emitowanie zdarzenia afterCommand (bez parametru)
+        emitter.emit('afterCommand');
     }
 });
-
